@@ -62,9 +62,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   // === Playback mirrors
   late final StreamSubscription<PlaybackState> _psSub;
   late final StreamSubscription<MediaItem?> _miSub;
+  late final StreamSubscription<Duration> _posSub;
 
   // Slider uchun silliq pozitsiya
-  Timer? _tickTimer;
   PlaybackState? _lastPs;
 
   bool isPlaying = false;
@@ -541,7 +541,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final saved = {
       'playingTab': _playingTab,
       'trackId': _trackIdFromMediaItem(mi),
-      'positionMillis': _effectivePosition(ps).inMilliseconds,
+      'positionMillis': ps.position.inMilliseconds, // 🔥 to‘g‘ridan-to‘g‘ri
     };
     await prefs.setString(_prefKeyLastState, jsonEncode(saved));
   }
@@ -645,31 +645,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     return null;
   }
 
-  // ==== Slider silliqligi: effectivePosition
-  Duration _effectivePosition(PlaybackState ps) {
-    // audio_service allaqachon smoothing qilib beradi
-    var pos = ps.position;
-
-    if (duration > Duration.zero && pos > duration) {
-      pos = duration;
-    }
-    if (pos.isNegative) {
-      pos = Duration.zero;
-    }
-    return pos;
-  }
 
 
-  void _startTicker() {
-    _tickTimer?.cancel();
-    _tickTimer = Timer.periodic(const Duration(milliseconds: 200), (_) {
-      final ps = _lastPs;
-      if (ps == null) return;
-      final eff = _effectivePosition(ps);
-      if (!mounted) return;
-      setState(() => position = eff);
-    });
-  }
+
+
 
   String _mediaIdForTrack(Track t) {
     return (t.localPath != null && t.localPath!.isNotEmpty)
@@ -745,7 +724,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     });
 
     // Ticker
-    _startTicker();
+    _posSub = audioHandler.positionStream.listen((pos) {
+      if (!mounted) return;
+      setState(() => position = pos);
+    });
 
     // Net + birinchi yuklash
     () async {
@@ -807,7 +789,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _playingVN.dispose();
     _miSub.cancel();
     _connSub?.cancel();
-    _tickTimer?.cancel();
+    _posSub.cancel();
     for (final c in _tabScrollCtrls.values) { c.dispose(); }
     _tabCtrl?.dispose();
     super.dispose();
@@ -1022,6 +1004,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           controller: _tabCtrl,
           isScrollable: false,
           labelColor: Colors.white,
+          indicatorWeight: 3,
+          indicatorColor: Colors.white,
+          labelStyle: TextStyle(fontWeight: FontWeight.bold),
           unselectedLabelColor: Colors.white70,
           indicatorSize: TabBarIndicatorSize.tab,
           labelPadding: const EdgeInsets.symmetric(horizontal: 8),
