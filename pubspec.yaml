@@ -31,7 +31,7 @@ dependencies:
   flutter:
     sdk: flutter
   dio: ^5.7.0
-  path_provider: ^2.1.4
+  path_provider: ^2.1.5
   connectivity_plus: ^7.0.0
   shared_preferences: ^2.2.3
   audio_service: ^0.18.18
@@ -52,21 +52,21 @@ dev_dependencies:
 flutter_icons:
   android: true
   ios: false
-  image_path: assets/images/icon1.png
+  image_path: assets/icons/asosiy.jpg
 
   # Android Adaptive icon (ixtiyoriy, tavsiya etiladi)
   adaptive_icon_background: "#6200ED"     # yoki assets/icons/bg.png
-  adaptive_icon_foreground: assets/images/icon1.png
+  adaptive_icon_foreground: assets/icons/asosiy.jpg
 
   # Web / macOS / Windows (ixtiyoriy)
   web:
     generate: true
-    image_path: assets/images/icon1.png
+    image_path: assets/icons/asosiy.jpg
     background_color: "#ffffff"
     theme_color: "#6200ED"
   windows:
     generate: true
-    image_path: assets/images/icon1.png
+    image_path: assets/icons/asosiy.jpg
 
 
 
@@ -93,6 +93,7 @@ flutter:
     - assets/audios/
     - assets/icons/wheel.png
     - assets/images/img.png
+    - assets/icons/asosiy.jpg
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see

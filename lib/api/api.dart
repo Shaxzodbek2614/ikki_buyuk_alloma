@@ -7,7 +7,7 @@ import '../model/track.dart';
 
 Future<List<ApiItem>> fetchApiItems() async {
   // O'zingizning endpoint'ingizni qo'ying:
-  final uri = Uri.parse('http://64.225.63.121/api/audios/');
+  final uri = Uri.parse('http://138.197.209.42/api/audios/');
   final res = await http.get(uri).timeout(const Duration(seconds: 15));
   if (res.statusCode != 200) {
     throw Exception('Server xatosi: ${res.statusCode}');

@@ -1,6 +1,7 @@
 // lib/pages/home_page.dart
 import 'dart:async';
 import 'dart:convert';
+import 'dart:core';
 import 'dart:io';
 
 import 'package:audio_service/audio_service.dart';
@@ -37,7 +38,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   MyAudioHandler get audioHandler => widget.audioHandler;
 
   // === API
-  static const String apiUrl = 'http://64.225.63.121/api/audios';
+  static const String
+  = 'http://138.197.209.42/api/audios/';
 
   // CarMode uchun VN’lar
   final ValueNotifier<String> _titleVN = ValueNotifier<String>('');
@@ -952,7 +954,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (tabCount == 0) {
       return Scaffold(
         appBar: AppBar(
-          leading: Image.asset("assets/images/img.png"),
+          leading: Image.asset("assets/icons/asosiy.jpg"),
           title: const Text('Икки буюк Aллома', style: TextStyle(fontFamily: 'Yotiq', fontStyle: FontStyle.italic)),
           foregroundColor: Colors.white,
           backgroundColor: const Color(0xff6200ed),
