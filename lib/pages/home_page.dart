@@ -38,8 +38,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   MyAudioHandler get audioHandler => widget.audioHandler;
 
   // === API
-  static const String
-  = 'http://138.197.209.42/api/audios/';
+  static const String apiUrl = 'http://138.197.209.42/api/audios/';
 
   // CarMode uchun VN’lar
   final ValueNotifier<String> _titleVN = ValueNotifier<String>('');
