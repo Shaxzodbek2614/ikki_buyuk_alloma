@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.music_player_example">
+    package="uz.shaxzodbek.ikki_buyuk_alloma">
 
     <!-- INTERNET va foreground service uchun ruxsatlar -->
     <uses-permission android:name="android.permission.INTERNET" />

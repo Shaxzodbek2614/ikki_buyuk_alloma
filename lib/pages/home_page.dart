@@ -45,10 +45,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   final ValueNotifier<bool> _playingVN = ValueNotifier<bool>(false);
 
   // === Persist keys
-  static const _prefKeyLastState  = 'last_playback_state';
-  static const _prefKeyMasters    = 'cached_masters_map';     // id->name
-  static const _prefKeyDurations  = 'cached_durations_ms';    // key -> ms
-  static const _prefKeyRawTracks  = 'cached_tracks_raw_list'; // API xom ro'yxat
+  static const _prefKeyLastState = 'last_playback_state';
+  static const _prefKeyMasters = 'cached_masters_map'; // id->name
+  static const _prefKeyDurations = 'cached_durations_ms'; // key -> ms
+  static const _prefKeyRawTracks = 'cached_tracks_raw_list'; // API xom ro'yxat
 
   // === UI / Net
   bool _loaded = false;
@@ -101,7 +101,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   // ==== Utils
   String _safe(String s) =>
-      s.replaceAll(RegExp(r'[\\/:*?"<>|]'), '_').replaceAll(RegExp(r'\s+'), ' ').trim();
+      s
+          .replaceAll(RegExp(r'[\\/:*?"<>|]'), '_')
+          .replaceAll(RegExp(r'\s+'), ' ')
+          .trim();
 
   Duration _parseDuration(String s) {
     final p = s.split(':');
@@ -117,18 +120,24 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     } else if (p.length == 1) {
       sec = double.tryParse(p[0]) ?? 0;
     }
-    return Duration(milliseconds: ((h * 3600 + m * 60) * 1000 + (sec * 1000).round()));
+    return Duration(
+      milliseconds: ((h * 3600 + m * 60) * 1000 + (sec * 1000).round()),
+    );
   }
 
   String _fmt(Duration d) {
     String two(int n) => n.toString().padLeft(2, '0');
-    final h = d.inHours, m = d.inMinutes.remainder(60), s = d.inSeconds.remainder(60);
+    final h = d.inHours,
+        m = d.inMinutes.remainder(60),
+        s = d.inSeconds.remainder(60);
     return h > 0 ? '${two(h)}:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
   }
 
   String _fmtClock(Duration d) {
     String two(int n) => n.toString().padLeft(2, '0');
-    final h = d.inHours, m = d.inMinutes.remainder(60), s = d.inSeconds.remainder(60);
+    final h = d.inHours,
+        m = d.inMinutes.remainder(60),
+        s = d.inSeconds.remainder(60);
     return h > 0 ? '$h:${two(m)}:${two(s)}' : '${two(m)}:${two(s)}';
   }
 
@@ -176,7 +185,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final key = _durationKeyFor(t);
     final cachedMs = _durationCache[key];
     if (cachedMs != null && cachedMs > 0) {
-      if (mounted) setState(() => t.duration = Duration(milliseconds: cachedMs));
+      if (mounted)
+        setState(() => t.duration = Duration(milliseconds: cachedMs));
       return;
     }
 
@@ -215,7 +225,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
   // ==== API
   Future<List<Map<String, dynamic>>> _fetchRaw() async {
-    final res = await http.get(Uri.parse(apiUrl)).timeout(const Duration(seconds: 20));
+    final res = await http
+        .get(Uri.parse(apiUrl))
+        .timeout(const Duration(seconds: 20));
     if (res.statusCode != 200) throw Exception('Server: ${res.statusCode}');
     final body = jsonDecode(res.body);
     if (body is List) return body.cast<Map<String, dynamic>>();
@@ -242,7 +254,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       final sizeMb = (j['size'] as num?)?.toDouble();
 
       final t = Track(
-        title, null,
+        title,
+        null,
         id: id,
         url: url,
         masterId: mid,
@@ -280,11 +293,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       for (final j in raw) {
         final master = j['master'] as Map<String, dynamic>;
         final mid = (master['id'] as num).toInt();
-        final mname = (master['name'] as String?) ?? _masters[mid] ?? 'Ustoz $mid';
+        final mname =
+            (master['name'] as String?) ?? _masters[mid] ?? 'Ustoz $mid';
 
         _masters[mid] = mname;
         if (!_masterOrder.contains(mid)) _masterOrder.add(mid);
-        map.putIfAbsent(mid, () => MasterGroup(id: mid, name: mname, tracks: []));
+        map.putIfAbsent(
+          mid,
+          () => MasterGroup(id: mid, name: mname, tracks: []),
+        );
 
         final id = (j['id'] as num).toInt();
         final title = j['name'] as String? ?? 'Track $id';
@@ -293,7 +310,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final sizeMb = (j['size'] as num?)?.toDouble();
 
         final t = Track(
-          title, null,
+          title,
+          null,
           id: id,
           url: url,
           masterId: mid,
@@ -335,7 +353,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     final out = <MasterGroup>[];
     if (_masterOrder.isNotEmpty) {
       for (final mid in _masterOrder) {
-        final g = map[mid] ?? MasterGroup(id: mid, name: _masters[mid] ?? 'Ustoz $mid', tracks: []);
+        final g =
+            map[mid] ??
+            MasterGroup(
+              id: mid,
+              name: _masters[mid] ?? 'Ustoz $mid',
+              tracks: [],
+            );
         out.add(g);
       }
     } else {
@@ -368,11 +392,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
 
       final dir = Directory(await _tracksDirPath());
       if (!await dir.exists()) return false;
-      final files = await dir
-          .list()
-          .where((e) => e is File && e.path.toLowerCase().endsWith('.mp3'))
-          .cast<File>()
-          .toList();
+      final files =
+          await dir
+              .list()
+              .where((e) => e is File && e.path.toLowerCase().endsWith('.mp3'))
+              .cast<File>()
+              .toList();
       if (files.isEmpty) return false;
 
       final map = <int, MasterGroup>{};
@@ -384,21 +409,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final parts = base.split('_'); // masterId_trackId_title
         if (parts.length >= 3) {
           masterId = int.tryParse(parts[0]);
-          trackId  = int.tryParse(parts[1]);
-          title    = parts.sublist(2).join('_');
+          trackId = int.tryParse(parts[1]);
+          title = parts.sublist(2).join('_');
         }
         masterId ??= -1;
         trackId ??= DateTime.now().millisecondsSinceEpoch;
 
-        final mname = _masters[masterId] ?? (masterId == -1 ? 'Yuklab olinganlar' : 'Ustoz $masterId');
+        final mname =
+            _masters[masterId] ??
+            (masterId == -1 ? 'Yuklab olinganlar' : 'Ustoz $masterId');
         _masters[masterId] = mname;
         if (!_masterOrder.contains(masterId)) _masterOrder.add(masterId);
 
-        map.putIfAbsent(masterId, () => MasterGroup(id: masterId!, name: mname, tracks: []));
+        map.putIfAbsent(
+          masterId,
+          () => MasterGroup(id: masterId!, name: mname, tracks: []),
+        );
         final t = Track(
-          title, null,
-          id: trackId!, url: null,
-          masterId: masterId, masterName: mname,
+          title,
+          null,
+          id: trackId!,
+          url: null,
+          masterId: masterId,
+          masterName: mname,
           duration: null,
           sizeMb: (f.lengthSync() / (1024 * 1024)),
         )..localPath = f.path;
@@ -430,12 +463,15 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   DateTime? _lastNetWarnAt;
   void _warnNoInternetOnce() {
     final now = DateTime.now();
-    if (_lastNetWarnAt != null && now.difference(_lastNetWarnAt!) < const Duration(seconds: 2)) {
+    if (_lastNetWarnAt != null &&
+        now.difference(_lastNetWarnAt!) < const Duration(seconds: 2)) {
       return;
     }
     _lastNetWarnAt = now;
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Интернетга уланинг')));
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Интернетга уланинг')));
   }
 
   Future<void> _downloadTrack(Track t) async {
@@ -445,14 +481,17 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     }
     if (t.url == null || t.url!.isEmpty) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('URL топилмади')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('URL топилмади')));
       return;
     }
     try {
       if (mounted) setState(() => _progress[t.id] = 0);
       final file = await _localFileFor(t);
       await Dio().download(
-        t.url!, file.path,
+        t.url!,
+        file.path,
         onReceiveProgress: (r, total) {
           if (total > 0 && mounted) setState(() => _progress[t.id] = r / total);
         },
@@ -460,12 +499,16 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       t.localPath = file.path;
       await audioHandler.promoteToLocalByTrackId(t.id, file.path);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Юклаб олинди ✅')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Юклаб олинди ✅')));
       setState(() {});
       await _ensureDurationFor(t);
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Internetga ulaning')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Internetga ulaning')));
     } finally {
       if (mounted) setState(() => _progress.remove(t.id));
     }
@@ -492,7 +535,8 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (index < 0 || index >= list.length) return;
     final t = list[index];
 
-    final isResumeCandidate = (_resumeTab == tab) &&
+    final isResumeCandidate =
+        (_resumeTab == tab) &&
         (_resumeIndex == index) &&
         (_resumeTrackId == t.id) &&
         (_resumePosMs != null && _resumePosMs! > 0);
@@ -518,7 +562,12 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
   Future<void> _ensureDownloadedInBackground(Track t) async {
     if (t.isDownloaded || t.url == null || _downloading.contains(t.id)) return;
     _downloading.add(t.id);
-    try { await _downloadTrack(t); } catch (_) {} finally { _downloading.remove(t.id); }
+    try {
+      await _downloadTrack(t);
+    } catch (_) {
+    } finally {
+      _downloading.remove(t.id);
+    }
   }
 
   Future<void> _next() => audioHandler.skipToNext();
@@ -555,7 +604,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Map<String, dynamic> saved;
     try {
       saved = jsonDecode(savedJson) as Map<String, dynamic>;
-    } catch (_) { return; }
+    } catch (_) {
+      return;
+    }
 
     final tab = (saved['playingTab'] as num?)?.toInt();
     final trackId = (saved['trackId'] as num?)?.toInt();
@@ -636,7 +687,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _jumpToIndexSmooth(tab: tab, index: index);
   }
 
-
   int? _trackIdFromMediaItem(MediaItem? mi) {
     final x = mi?.extras;
     if (x == null) return null;
@@ -645,11 +695,6 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     if (v is num) return v.toInt();
     return null;
   }
-
-
-
-
-
 
   String _mediaIdForTrack(Track t) {
     return (t.localPath != null && t.localPath!.isNotEmpty)
@@ -685,7 +730,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         final tab = _playingTab;
         if (tab >= 0 && tab < _groups.length) {
           final list = _groups[tab].tracks;
-          final idx  = _currentIndexMap[tab] ?? -1;
+          final idx = _currentIndexMap[tab] ?? -1;
           if (idx >= 0 && idx < list.length) {
             _maybePrefetchNext(list, idx);
           }
@@ -754,7 +799,7 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         if (_online) {
           await _loadFromApi();
         } else {
-          bool ok = await _loadFromCachedRaw();     // to‘liq kesh
+          bool ok = await _loadFromCachedRaw(); // to‘liq kesh
           if (!ok) ok = await _loadFromDiskDownloads(); // bo‘lmasa diskdagi mp3
           if (!ok) _groups = [];
         }
@@ -763,8 +808,13 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _tabCtrl = TabController(
           length: _groups.length,
           vsync: this,
-          initialIndex: (_playingTab >= 0 && _playingTab < _groups.length) ? _playingTab : 0,
-        )..addListener(() { if (mounted) setState(() {}); });
+          initialIndex:
+              (_playingTab >= 0 && _playingTab < _groups.length)
+                  ? _playingTab
+                  : 0,
+        )..addListener(() {
+          if (mounted) setState(() {});
+        });
 
         setState(() => _loaded = true);
         await _restorePlaybackStateAndScroll();
@@ -774,7 +824,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         _error = e.toString();
         if (!ok) _groups = [];
         if (!mounted) return;
-        _tabCtrl = TabController(length: _groups.length, vsync: this, initialIndex: 0);
+        _tabCtrl = TabController(
+          length: _groups.length,
+          vsync: this,
+          initialIndex: 0,
+        );
         setState(() => _loaded = true);
         await _restorePlaybackStateAndScroll();
       }
@@ -791,7 +845,9 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     _miSub.cancel();
     _connSub?.cancel();
     _posSub.cancel();
-    for (final c in _tabScrollCtrls.values) { c.dispose(); }
+    for (final c in _tabScrollCtrls.values) {
+      c.dispose();
+    }
     _tabCtrl?.dispose();
     super.dispose();
   }
@@ -802,12 +858,18 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
     Widget trailing;
     if (pr != null) {
       trailing = SizedBox(
-        width: 28, height: 28,
+        width: 28,
+        height: 28,
         child: Stack(
           fit: StackFit.expand,
           children: [
             CircularProgressIndicator(value: pr, strokeWidth: 3),
-            Center(child: Text('${(pr * 100).round()}%', style: const TextStyle(fontSize: 9))),
+            Center(
+              child: Text(
+                '${(pr * 100).round()}%',
+                style: const TextStyle(fontSize: 9),
+              ),
+            ),
           ],
         ),
       );
@@ -817,24 +879,40 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       trailing = IconButton(
         padding: const EdgeInsets.only(left: 20),
         icon: const Icon(Icons.download),
-        onPressed: () => _downloadTrack(t), // offline bo'lsa SnackBar ko'rsatadi
+        onPressed:
+            () => _downloadTrack(t), // offline bo'lsa SnackBar ko'rsatadi
       );
     }
 
-    final icon = isCurrentPlaying
-        ? (isPlaying ? Icons.graphic_eq : Icons.pause_circle_filled)
-        : Icons.music_note;
+    final icon =
+        isCurrentPlaying
+            ? (isPlaying ? Icons.graphic_eq : Icons.pause_circle_filled)
+            : Icons.music_note;
 
     return ListTile(
       leading: Icon(icon, color: isCurrentPlaying ? Colors.indigo : null),
-      title: Text(t.title, style: const TextStyle(fontFamily: 'Yotiq', fontWeight: FontWeight.w600)),
+      title: Text(
+        t.title,
+        style: const TextStyle(
+          fontFamily: 'Yotiq',
+          fontWeight: FontWeight.w600,
+        ),
+      ),
       subtitle: Row(
         children: [
-          const Icon(Icons.access_time, size: 14, color: Colors.black45), const SizedBox(width: 4),
-          Text(_fmtClock(t.duration ?? Duration.zero), style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          const Icon(Icons.access_time, size: 14, color: Colors.black45),
+          const SizedBox(width: 4),
+          Text(
+            _fmtClock(t.duration ?? Duration.zero),
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
           const SizedBox(width: 12),
-          const Icon(Icons.sd_storage, size: 14, color: Colors.black45), const SizedBox(width: 4),
-          Text(_fmtSize(t.sizeMb), style: const TextStyle(fontSize: 12, color: Colors.black54)),
+          const Icon(Icons.sd_storage, size: 14, color: Colors.black45),
+          const SizedBox(width: 4),
+          Text(
+            _fmtSize(t.sizeMb),
+            style: const TextStyle(fontSize: 12, color: Colors.black54),
+          ),
         ],
       ),
       onTap: onTap,
@@ -855,7 +933,10 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       );
     }
 
-    final controller = _tabScrollCtrls.putIfAbsent(tab, () => ScrollController());
+    final controller = _tabScrollCtrls.putIfAbsent(
+      tab,
+      () => ScrollController(),
+    );
 
     return ListView.separated(
       controller: controller,
@@ -870,7 +951,11 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
         }
 
         final isCurrentPlaying = (tab == _playingTab) && (i == playingIdx);
-        return _tileFor(t, isCurrentPlaying, () => _onItemTap(tab: tab, index: i));
+        return _tileFor(
+          t,
+          isCurrentPlaying,
+          () => _onItemTap(tab: tab, index: i),
+        );
       },
     );
   }
@@ -891,13 +976,32 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Text(nowTitle, maxLines: 1, overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.white, fontFamily: "Yotiq")),
+                Text(
+                  nowTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                    fontFamily: "Yotiq",
+                  ),
+                ),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    IconButton(iconSize: 34, onPressed: _prev, icon: const Icon(Icons.skip_previous, color: Colors.white)),
-                    IconButton(iconSize: 30, onPressed: () => _seekRelativeSeconds(-5), icon: const Icon(Icons.replay_5, color: Colors.white)),
+                    IconButton(
+                      iconSize: 34,
+                      onPressed: _prev,
+                      icon: const Icon(
+                        Icons.skip_previous,
+                        color: Colors.white,
+                      ),
+                    ),
+                    IconButton(
+                      iconSize: 30,
+                      onPressed: () => _seekRelativeSeconds(-5),
+                      icon: const Icon(Icons.replay_5, color: Colors.white),
+                    ),
                     IconButton(
                       iconSize: 34,
                       onPressed: () async {
@@ -908,15 +1012,29 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                           _clearResumeCandidate();
                         }
                       },
-                      icon: Icon(isPlaying ? Icons.pause : Icons.play_arrow, color: Colors.white),
+                      icon: Icon(
+                        isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: Colors.white,
+                      ),
                     ),
-                    IconButton(iconSize: 30, onPressed: () => _seekRelativeSeconds(5), icon: const Icon(Icons.forward_5, color: Colors.white)),
-                    IconButton(iconSize: 34, onPressed: _next, icon: const Icon(Icons.skip_next, color: Colors.white)),
+                    IconButton(
+                      iconSize: 30,
+                      onPressed: () => _seekRelativeSeconds(5),
+                      icon: const Icon(Icons.forward_5, color: Colors.white),
+                    ),
+                    IconButton(
+                      iconSize: 34,
+                      onPressed: _next,
+                      icon: const Icon(Icons.skip_next, color: Colors.white),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
-                    Text(_fmt(position), style: const TextStyle(fontSize: 12, color: Colors.white)),
+                    Text(
+                      _fmt(position),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                    ),
                     const SizedBox(width: 6),
                     Expanded(
                       child: Slider(
@@ -925,12 +1043,22 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
                         min: 0,
                         max: max > 0 ? max : 1,
                         value: value,
-                        onChanged: (v) => setState(() => position = Duration(milliseconds: v.toInt())),
-                        onChangeEnd: (v) async => audioHandler.seek(Duration(milliseconds: v.toInt())),
+                        onChanged:
+                            (v) => setState(
+                              () =>
+                                  position = Duration(milliseconds: v.toInt()),
+                            ),
+                        onChangeEnd:
+                            (v) async => audioHandler.seek(
+                              Duration(milliseconds: v.toInt()),
+                            ),
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(_fmt(duration), style: const TextStyle(fontSize: 12, color: Colors.white)),
+                    Text(
+                      _fmt(duration),
+                      style: const TextStyle(fontSize: 12, color: Colors.white),
+                    ),
                   ],
                 ),
               ],
@@ -954,45 +1082,64 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
       return Scaffold(
         appBar: AppBar(
           leading: Image.asset("assets/icons/asosiy.jpg"),
-          title: const Text('Икки буюк Aллома', style: TextStyle(fontFamily: 'Yotiq', fontStyle: FontStyle.italic)),
+          title: const Text(
+            'Икки буюк Aллома',
+            style: TextStyle(fontFamily: 'Yotiq', fontStyle: FontStyle.italic),
+          ),
           foregroundColor: Colors.white,
           backgroundColor: const Color(0xff6200ed),
           actions: [
             if (!_online)
-              const Padding(padding: EdgeInsets.only(right: 8), child: Icon(Icons.wifi_off, color: Colors.yellowAccent)),
+              const Padding(
+                padding: EdgeInsets.only(right: 8),
+                child: Icon(Icons.wifi_off, color: Colors.yellowAccent),
+              ),
           ],
         ),
-        body: Center(child: Text(_online ? (_error ?? 'Треклар топилмади') : 'Оффлайн: kesh yoki yuklab olinganlar topilmadi')),
+        body: Center(
+          child: Text(
+            _online
+                ? (_error ?? 'Треклар топилмади')
+                : 'Оффлайн: kesh yoki yuklab olinganlar topilmadi',
+          ),
+        ),
       );
     }
 
     return Scaffold(
       appBar: AppBar(
-        leading: Image.asset("assets/images/img.png"),
-        title: const Text('Икки буюк Aллома', style: TextStyle(fontFamily: 'Yotiq', fontStyle: FontStyle.italic)),
+        leading: Image.asset("assets/icons/asosiy.jpg"),
+        title: const Text(
+          'Икки буюк Aллома',
+          style: TextStyle(fontFamily: 'Yotiq', fontStyle: FontStyle.italic),
+        ),
         foregroundColor: Colors.white,
         backgroundColor: const Color(0xff6200ed),
         actions: [
           if (!_online)
-            const Padding(padding: EdgeInsets.only(right: 8), child: Icon(Icons.wifi_off, color: Colors.yellowAccent)),
+            const Padding(
+              padding: EdgeInsets.only(right: 8),
+              child: Icon(Icons.wifi_off, color: Colors.yellowAccent),
+            ),
           IconButton(
             onPressed: () {
               Navigator.of(context).push(
                 MaterialPageRoute(
-                  builder: (_) => CarModePage(
-                    titleListenable: _titleVN,
-                    isPlayingListenable: _playingVN,
-                    onNext: _next,
-                    onPrev: _prev,
-                    onToggle: () async {
-                      if (isPlaying) {
-                        await audioHandler.pause();
-                      } else {
-                        await audioHandler.play();
-                        _clearResumeCandidate();
-                      }
-                    },
-                  ),
+                  builder:
+                      (_) => CarModePage(
+                        titleListenable: _titleVN,
+                        isPlayingListenable: _playingVN,
+                        onNext: _next,
+                        onPrev: _prev,
+                        onToggle: () async {
+                          if (isPlaying) {
+                            await audioHandler.pause();
+                          } else {
+                            await audioHandler.play();
+                            _clearResumeCandidate();
+                          }
+                        },
+                      ),
                 ),
               );
             },
@@ -1000,41 +1147,45 @@ class _HomePageState extends State<HomePage> with TickerProviderStateMixin {
           ),
           IconButton(onPressed: () {}, icon: const Icon(Icons.more_vert)),
         ],
-        bottom: (tabCount > 1)
-            ? TabBar(
-          controller: _tabCtrl,
-          isScrollable: false,
-          labelColor: Colors.white,
-          indicatorWeight: 3,
-          indicatorColor: Colors.white,
-          labelStyle: TextStyle(fontWeight: FontWeight.bold),
-          unselectedLabelColor: Colors.white70,
-          indicatorSize: TabBarIndicatorSize.tab,
-          labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-          tabs: [
-            for (final g in _groups)
-              Tab(
-                child: Text(
-                  g.name,
-                  textAlign: TextAlign.center,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
-                ),
-              ),
-          ],
-        )
-            : null,
+        bottom:
+            (tabCount > 1)
+                ? TabBar(
+                  controller: _tabCtrl,
+                  isScrollable: false,
+                  labelColor: Colors.white,
+                  indicatorWeight: 3,
+                  indicatorColor: Colors.white,
+                  labelStyle: TextStyle(fontWeight: FontWeight.bold),
+                  unselectedLabelColor: Colors.white70,
+                  indicatorSize: TabBarIndicatorSize.tab,
+                  labelPadding: const EdgeInsets.symmetric(horizontal: 8),
+                  tabs: [
+                    for (final g in _groups)
+                      Tab(
+                        child: Text(
+                          g.name,
+                          textAlign: TextAlign.center,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                  ],
+                )
+                : null,
       ),
       body: Column(
         children: [
           Expanded(
-            child: (tabCount > 1)
-                ? TabBarView(
-              controller: _tabCtrl,
-              children: [for (int i = 0; i < tabCount; i++) _buildList(i)],
-            )
-                : _buildList(0),
+            child:
+                (tabCount > 1)
+                    ? TabBarView(
+                      controller: _tabCtrl,
+                      children: [
+                        for (int i = 0; i < tabCount; i++) _buildList(i),
+                      ],
+                    )
+                    : _buildList(0),
           ),
           _buildNowPlayingBar(),
         ],
